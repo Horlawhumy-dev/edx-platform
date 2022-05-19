@@ -270,5 +270,17 @@
     "paths": [
       "common/djangoapps/"
     ]
+  },
+  "xmodule-1": {
+    "settings": "lms.envs.test",
+    "paths": [
+      "xmodule/"
+    ]
+  },
+  "xmodule-2": {
+    "settings": "cms.envs.test",
+    "paths": [
+      "xmodule/"
+    ]
   }
 }
