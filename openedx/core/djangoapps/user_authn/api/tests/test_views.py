@@ -202,6 +202,11 @@ class MFEContextViewTest(ThirdPartyAuthTestMixin, APITestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data['registration_fields']['fields'] == {}
 
+    @with_site_configuration(
+        configuration={
+            'extended_profile_fields': ['first_name', 'last_name']
+        }
+    )
     @override_settings(
         ENABLE_DYNAMIC_REGISTRATION_FIELDS=True,
         REGISTRATION_EXTRA_FIELDS={'state': 'required', 'last_name': 'required', 'first_name': 'required'},
@@ -241,7 +246,8 @@ class MFEContextViewTest(ThirdPartyAuthTestMixin, APITestCase):
 
     @with_site_configuration(
         configuration={
-            'EXTRA_FIELD_OPTIONS': {'profession': ['Software Engineer', 'Teacher', 'Other']}
+            'EXTRA_FIELD_OPTIONS': {'profession': ['Software Engineer', 'Teacher', 'Other']},
+            'extended_profile_fields': ['profession', 'specialty']
         }
     )
     @override_settings(
@@ -272,6 +278,11 @@ class MFEContextViewTest(ThirdPartyAuthTestMixin, APITestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data['optional_fields']['fields'] == expected_response
 
+    @with_site_configuration(
+        configuration={
+            'extended_profile_fields': ['specialty']
+        }
+    )
     @override_settings(
         ENABLE_DYNAMIC_REGISTRATION_FIELDS=True,
         REGISTRATION_EXTRA_FIELDS={'goals': 'optional', 'specialty': 'optional'},

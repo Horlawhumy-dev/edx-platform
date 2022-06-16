@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.djangoapps.user_authn.api import form_fields
 from openedx.core.djangoapps.user_authn.views.registration_form import get_registration_extension_form
+from common.djangoapps.student.models import UserProfile
 
 
 class RegistrationFieldsContext(APIView):
@@ -37,6 +38,7 @@ class RegistrationFieldsContext(APIView):
         'specialty',
         'marketing_emails_opt_in',
     ]
+    userProfile_fields = [field.name for field in UserProfile._meta.get_fields()]
 
     def _get_field_order(self):
         """
@@ -84,6 +86,10 @@ class RegistrationFieldsContext(APIView):
                 ):
                     self.valid_fields.append(field_name)
 
+    def _field_exist_in_UserProfile_fields_or_user_extended_config(self, field):
+        return (field in self.userProfile_fields or
+                field in configuration_helpers.get_value('extended_profile_fields', []))
+
     def _get_fields(self):
         """
         Returns the required or optional fields configured in REGISTRATION_EXTRA_FIELDS settings.
@@ -91,14 +97,16 @@ class RegistrationFieldsContext(APIView):
         # Custom form fields can be added via the form set in settings.REGISTRATION_EXTENSION_FORM
         custom_form = get_registration_extension_form() or {}
         response = {}
+
         for field in self.valid_fields:
-            if custom_form and field in custom_form.fields:
-                response[field] = form_fields.add_extension_form_field(
-                    field, custom_form, custom_form.fields[field], self.field_type
-                )
-            else:
-                field_handler = getattr(form_fields, f'add_{field}_field', None)
-                if field_handler:
-                    response[field] = field_handler(self.field_type == 'required')
+            if self._field_exist_in_UserProfile_fields_or_user_extended_config(field):
+                if custom_form and field in custom_form.fields:
+                    response[field] = form_fields.add_extension_form_field(
+                        field, custom_form, custom_form.fields[field], self.field_type
+                    )
+                else:
+                    field_handler = getattr(form_fields, f'add_{field}_field', None)
+                    if field_handler:
+                        response[field] = field_handler(self.field_type == 'required')
 
         return response
